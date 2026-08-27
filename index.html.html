@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DUNKLINE</title>
+<style>
+:root{
+  --bg:#0a0c10;
+  --panel:#101319;
+  --panel2:#151a22;
+  --line:#252b35;
+  --text:#f3f5f8;
+  --muted:#8b95a5;
+  --accent:#ff6b2c;
+  --accent2:#ffb066;
+  --green:#65d99a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.hidden{display:none!important}
+
+/* MENU */
+#app{
+  position:fixed;inset:0;z-index:20;
+  display:grid;grid-template-columns:250px 1fr;
+  background:
+    radial-gradient(circle at 72% 14%,rgba(255,107,44,.09),transparent 28%),
+    linear-gradient(180deg,#0b0d12,#090b10);
+}
+.sidebar{
+  padding:22px 16px;border-right:1px solid var(--line);
+  background:#0d1015;display:flex;flex-direction:column;gap:14px;
+}
+.brand{display:flex;gap:11px;align-items:center;padding:4px 4px 18px;border-bottom:1px solid var(--line)}
+.brandIcon{width:42px;height:42px;border-radius:12px;background:var(--accent);display:grid;place-items:center;font-size:23px;box-shadow:0 8px 24px rgba(255,107,44,.22)}
+.brandName{font-size:22px;font-weight:900;letter-spacing:-1px}
+.brandSub{font-size:11px;color:var(--muted);margin-top:2px}
+.navBtn{
+  width:100%;border:0;border-radius:11px;padding:12px 13px;text-align:left;
+  background:transparent;color:var(--muted);font-weight:700;
+}
+.navBtn:hover,.navBtn.active{background:#171b23;color:var(--text)}
+.sidebarBottom{margin-top:auto}
+.bestBox{padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:13px}
+.bestBox b{display:block;color:var(--text);font-size:20px;margin-top:3px}
+
+.main{overflow:auto;padding:28px}
+.page{display:none;max-width:1120px;margin:0 auto}
+.page.active{display:block}
+.topbar{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:24px}
+.eyebrow{color:var(--accent2);font-size:12px;font-weight:900;letter-spacing:1.5px}
+h1{margin:5px 0 5px;font-size:42px;letter-spacing:-2px}
+.desc{color:var(--muted);max-width:720px;line-height:1.5}
+.playBtn{
+  border:0;border-radius:13px;padding:14px 24px;background:var(--accent);color:#fff;
+  font-weight:900;font-size:16px;box-shadow:0 10px 30px rgba(255,107,44,.2)
+}
+.playBtn:hover{transform:translateY(-1px)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.sectionHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sectionHead h2{margin:0;font-size:19px}
+.count{color:var(--muted);font-size:12px}
+
+/* LEVELS */
+.levelGrid{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+.levelBtn{
+  border:1px solid var(--line);background:#131720;color:#bec6d2;border-radius:10px;
+  height:48px;font-weight:800;position:relative
+}
+.levelBtn:hover{border-color:#4a5363;color:#fff}
+.levelBtn.active{background:var(--accent);border-color:var(--accent);color:white}
+.levelBtn .dot{
+  position:absolute;right:5px;top:5px;width:5px;height:5px;border-radius:50%;
+  background:rgba(255,255,255,.7)
+}
+.levelInfo{margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{background:#0d1118;border:1px solid var(--line);border-radius:11px;padding:12px}
+.stat small{color:var(--muted);display:block;margin-bottom:4px}
+.stat b{font-size:15px}
+
+/* SKINS */
+.skinGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.skinCard{
+  border:1px solid var(--line);background:#131720;color:#fff;border-radius:12px;
+  min-height:88px;padding:8px;text-align:center
+}
+.skinCard:hover{border-color:#505a6c}
+.skinCard.active{outline:2px solid var(--accent);border-color:transparent}
+.skinCard.locked{opacity:.38;filter:grayscale(.75)}
+.skinIcon{font-size:34px;margin-bottom:5px}
+.skinName{font-size:10px;color:#b6bfcd}
+
+/* QUEST */
+.questWrap{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}
+.questMain{background:#131720;border:1px solid var(--line);border-radius:14px;padding:18px}
+.questTitle{font-size:20px;font-weight:900}
+.questDesc{color:var(--muted);margin-top:5px}
+.progress{height:9px;background:#090d13;border-radius:99px;overflow:hidden;margin:16px 0 10px}
+.fill{height:100%;background:linear-gradient(90deg,var(--accent),#ffb066)}
+.reward{font-size:13px}
+.nextQuests{display:flex;flex-direction:column;gap:8px}
+.nextQuest{padding:12px;border:1px solid var(--line);border-radius:11px;color:var(--muted);font-size:12px}
+
+/* SETTINGS */
+.setting{padding:16px 0;border-bottom:1px solid var(--line)}
+.setting:last-child{border:0}
+.settingTop{display:flex;justify-content:space-between;margin-bottom:10px}
+.settingTop span:last-child{color:var(--muted)}
+input[type=range]{width:100%}
+.keyRow{display:flex;gap:8px}
+.keyBox{flex:1;padding:12px;border:1px solid var(--line);background:#0c1016;border-radius:10px;font-weight:800}
+.smallBtn{border:1px solid var(--line);background:#171c25;color:#fff;border-radius:10px;padding:0 14px;font-weight:800}
+
+/* GAME HUD */
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+.hudTag{position:absolute;top:17px;padding:9px 12px;border-radius:10px;background:rgba(10,12,16,.55);backdrop-filter:blur(8px);font-weight:800;font-size:13px;border:1px solid rgba(255,255,255,.08)}
+#levelHud{left:17px}
+#bestHud{right:17px}
+#scoreHud{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:58px;font-weight:900;text-shadow:0 5px 20px rgba(0,0,0,.4)}
+#fireHud{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-weight:900;color:#ffd179;text-shadow:0 0 18px #ff4a00}
+
+/* GAME OVER */
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(8,10,14,.78);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.overBox{width:min(430px,92vw);background:#11151c;border:1px solid var(--line);border-radius:18px;padding:24px;text-align:center}
+.overScore{font-size:78px;font-weight:900;margin:6px 0}
+.overActions{display:flex;gap:8px;margin-top:18px}
+.overActions button{flex:1;padding:13px;border-radius:11px;border:1px solid var(--line);background:#171c25;color:#fff;font-weight:900}
+.overActions .again{background:var(--accent);border-color:var(--accent)}
+
+@media(max-width:900px){
+  #app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:16px}
+  .levelGrid{grid-template-columns:repeat(5,1fr)}
+  .skinGrid{grid-template-columns:repeat(4,1fr)}
+  .questWrap{grid-template-columns:1fr}
+  .topbar{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="levelHud" class="hudTag">NIVEAU 1</div>
+  <div id="bestHud" class="hudTag">RECORD 0</div>
+  <div id="scoreHud">0</div>
+  <div id="fireHud" class="hidden">🔥 FIRE MODE</div>
+</div>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandIcon">🏀</div>
+      <div>
+        <div class="brandName">DUNKLINE</div>
+        <div class="brandSub">arcade basketball</div>
+      </div>
+    </div>
+
+    <button class="navBtn active" data-page="play">Jouer</button>
+    <button class="navBtn" data-page="levels">Tous les niveaux</button>
+    <button class="navBtn" data-page="skins">Skins</button>
+    <button class="navBtn" data-page="quests">Quêtes</button>
+    <button class="navBtn" data-page="settings">Paramètres</button>
+
+    <div class="sidebarBottom">
+      <div class="bestBox">Meilleur score<b id="menuBest">0</b></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section id="page-play" class="page active">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">MODE ARCADE</div>
+          <h1>Choisis ton niveau.</h1>
+          <div class="desc">Les 170 niveaux sont disponibles dès maintenant. La difficulté monte progressivement sans créer de paniers impossibles.</div>
+        </div>
+        <button id="playBtn" class="playBtn">LANCER LA PARTIE</button>
+      </div>
+
+      <div class="card">
+        <div class="sectionHead">
+          <h2>Niveau sélectionné</h2>
+          <div class="count" id="selectedLevelLabel">Niveau 1</div>
+        </div>
+
+        <div id="levelInfo" class="levelInfo">
+          <div class="stat"><small>Difficulté</small><b id="infoDiff">Facile</b></div>
+          <div class="stat"><small>Vitesse</small><b id="infoSpeed">3.0</b></div>
+          <div class="stat"><small>Gravité</small><b id="infoGravity">0.40</b></div>
+          <div class="stat"><small>Rythme</small><b id="infoBpm">90 BPM</b></div>
+        </div>
+
+        <button id="openLevelsBtn" class="playBtn" style="margin-top:14px;width:100%">VOIR LES 170 NIVEAUX</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="sectionHead">
+          <h2>Quête en cours</h2>
+          <button id="openQuestsBtn" class="smallBtn" style="height:36px">VOIR LES QUÊTES</button>
+        </div>
+        <div id="questPreview"></div>
+      </div>
+    </section>
+
+    <section id="page-levels" class="page">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">SÉLECTION</div>
+          <h1>Tous les niveaux</h1>
+          <div class="desc">Clique sur un niveau pour le sélectionner. Les 170 niveaux sont disponibles dès le début.</div>
+        </div>
+        <button id="playSelectedBtn" class="playBtn">JOUER AU NIVEAU SÉLECTIONNÉ</button>
+      </div>
+
+      <div class="card">
+        <div class="sectionHead">
+          <h2>170 niveaux</h2>
+          <div class="count">Tous disponibles</div>
+        </div>
+        <div id="levelGrid" class="levelGrid"></div>
+      </div>
+    </section>
+
+    <section id="page-skins" class="page">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">COLLECTION</div>
+          <h1>Skins</h1>
+          <div class="desc">200 skins. Le premier est offert, les autres se débloquent avec les quêtes.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="skinGrid" class="skinGrid"></div>
+      </div>
+    </section>
+
+    <section id="page-quests" class="page">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">PROGRESSION</div>
+          <h1>Quêtes infinies</h1>
+          <div class="desc">Termine une quête, débloque un skin, puis une nouvelle quête est générée automatiquement.</div>
+        </div>
+      </div>
+      <div class="questWrap">
+        <div id="questMain" class="questMain"></div>
+        <div id="nextQuests" class="nextQuests"></div>
+      </div>
+    </section>
+
+    <section id="page-settings" class="page">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">RÉGLAGES</div>
+          <h1>Paramètres</h1>
+          <div class="desc">Régle le son et choisis ta propre touche pour sauter.</div>
+        </div>
+      </div>
+      <div class="card" style="max-width:650px">
+        <div class="setting">
+          <div class="settingTop"><span>Musique</span><span id="musicValue">70%</span></div>
+          <input id="musicVolume" type="range" min="0" max="100" value="70">
+        </div>
+        <div class="setting">
+          <div class="settingTop"><span>Effets sonores</span><span id="sfxValue">85%</span></div>
+          <input id="sfxVolume" type="range" min="0" max="100" value="85">
+        </div>
+        <div class="setting">
+          <div class="settingTop"><span>Touche pour sauter</span><span></span></div>
+          <div class="keyRow">
+            <div id="keyDisplay" class="keyBox">ESPACE</div>
+            <button id="changeKey" class="smallBtn">CHANGER</button>
+          </div>
+          <div id="keyHint" style="color:var(--muted);font-size:12px;margin-top:8px">Clique sur CHANGER puis appuie sur la touche de ton choix.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="gameOver" class="overlay hidden">
+  <div class="overBox">
+    <div style="color:var(--muted);font-size:13px">PARTIE TERMINÉE</div>
+    <div id="finalScore" class="overScore">0</div>
+    <div id="recordText"></div>
+    <div class="overActions">
+      <button id="backMenu">MENU</button>
+      <button id="retryBtn" class="again">REJOUER</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth;canvas.height=innerHeight;
+
+const app=document.getElementById("app");
+const hud=document.getElementById("hud");
+const gameOver=document.getElementById("gameOver");
+const levelGrid=document.getElementById("levelGrid");
+const skinGrid=document.getElementById("skinGrid");
+const scoreHud=document.getElementById("scoreHud");
+const levelHud=document.getElementById("levelHud");
+const bestHud=document.getElementById("bestHud");
+const fireHud=document.getElementById("fireHud");
+const menuBest=document.getElementById("menuBest");
+
+let selectedLevel=1;
+let selectedSkin=0;
+let running=false;
+let score=0;
+let fireMode=false;
+let hoops=[],obstacles=[],particles=[];
+let screenShake=0,flashAlpha=0;
+
+let bestScore=Number(localStorage.getItem("dunklineBest")||0);
+let progress=JSON.parse(localStorage.getItem("dunklineProgress")||'{"games":0,"hoops":0,"fires":0,"totalScore":0,"quest":1,"unlocked":1}');
+if(!progress.quest)progress.quest=1;
+if(!progress.unlocked)progress.unlocked=1;
+
+let jumpKey=localStorage.getItem("dunklineKey")||"Space";
+let awaitingKey=false;
+
+let musicVolume=Number(localStorage.getItem("dunklineMusic")||70);
+let sfxVolume=Number(localStorage.getItem("dunklineSfx")||85);
+let audioCtx=null,musicGain=null,sfxGain=null,nextBeat=0,musicStep=0;
+
+const iconPool=["🏀","⚽","⚾","🎾","🏐","🎱","🪐","🌍","💣","🍩","🍪","🍎","💎","💀","☀️","👽","⭐","❤️","🔥","⚡","❄️","🌈","🌙","☄️","🍉","🍓","🍒","🥝","🍋","🥥","🍕","🍔","🌮","🍟","🎃","👻","🤖","👑","🎲","🧊","🔮","🛸","🚀","🚗","🏎️","🎯","🎮","🎧","🐉","🦄","🐸","🐼","🦊","🐺","🦁","🐯","🐙","🦈","🦋","🦂","🐍","🦖","🦅","🦇","🌵","🌊","🌋","🎁","🧸","🪩","🪐","🛰️","🧨"];
+const prefixes=["Classic","Neon","Shadow","Fire","Ice","Galaxy","Gold","Toxic","Cyber","Royal","Storm","Lava","Ghost","Crystal","Ultra","Dark","Light","Plasma","Cosmic","Turbo"];
+const skins=[];
+for(let i=0;i<200;i++){
+  skins.push({
+    icon:iconPool[i%iconPool.length],
+    name:i===0?"Basket Classic":prefixes[Math.floor(i/iconPool.length)%prefixes.length]+" "+(i+1)
+  });
+}
+
+/*
+170 niveaux : la difficulté augmente mais reste jouable.
+On plafonne la gravité, la vitesse et l'espacement pour éviter les niveaux impossibles.
+*/
+const levels=Array.from({length:170},(_,i)=>{
+  const n=i+1;
+  const phase=(n-1)/169;
+  const speed=3.0+Math.pow(phase,.82)*3.35;       // max ~6.35
+  const gravity=.40+Math.pow(phase,.9)*.19;       // max ~.59
+  const jump=-7.8-Math.pow(phase,.8)*1.1;         // max ~-8.9
+  const distance=500-Math.pow(phase,.75)*155;     // min ~345
+  const obstacleChance=Math.min(.58,Math.max(0,(n-8)/220));
+  const bpm=Math.round(88+phase*72);               // 88 -> 160 BPM
+
+  let label="Facile";
+  if(n>25)label="Normal";
+  if(n>60)label="Difficile";
+  if(n>105)label="Expert";
+  if(n>145)label="Extrême";
+
+  return {n,label,speed,gravity,jump,distance,obstacleChance,bpm};
+});
+
+const themes=[
+["#2b79b8","#7fd2ee"],["#497f5f","#9ed29a"],["#7663a7","#c49bca"],["#b97838","#d8ba78"],
+["#287f7b","#75c6bf"],["#a84a55","#ce8d91"],["#4c5a9a","#8fa9d0"],["#8f5598","#c792bb"],
+["#34876a","#91bea1"],["#a26c35","#d1b27b"],["#8b4045","#c27e6e"],["#5b4d88","#a395bf"]
+];
+
+const melodies=[
+[261,329,392,523],[293,369,440,587],[329,392,493,659],[349,440,523,698],
+[392,493,587,783],[220,277,329,440],[246,311,369,493],[261,311,392,523]
+];
+
+function saveProgress(){localStorage.setItem("dunklineProgress",JSON.stringify(progress))}
+
+function currentQuest(index=progress.quest){
+  const cycle=(index-1)%6;
+  const tier=Math.floor((index-1)/6)+1;
+  if(cycle===0)return{title:"Paniers cumulés",desc:`Marque ${10+tier*5} paniers au total.`,type:"hoops",target:10+tier*5};
+  if(cycle===1)return{title:"Score à battre",desc:`Atteins ${5+tier*2} points dans une partie.`,type:"best",target:5+tier*2};
+  if(cycle===2)return{title:"Régularité",desc:`Joue ${3+Math.min(tier,12)} parties.`,type:"games",target:3+Math.min(tier,12)};
+  if(cycle===3)return{title:"En feu",desc:`Active FIRE MODE ${1+Math.floor(tier/2)} fois.`,type:"fires",target:1+Math.floor(tier/2)};
+  if(cycle===4)return{title:"Score total",desc:`Cumule ${30+tier*12} points.`,type:"totalScore",target:30+tier*12};
+  return{title:"Explorateur",desc:`Joue au niveau ${Math.min(170,10+tier*4)} ou plus.`,type:"maxLevel",target:Math.min(170,10+tier*4)};
+}
+function questValue(q){
+  if(q.type==="best")return bestScore;
+  return progress[q.type]||0;
+}
+function checkQuest(){
+  let guard=0;
+  while(progress.unlocked<skins.length&&guard<20){
+    const q=currentQuest();
+    if(questValue(q)<q.target)break;
+    progress.quest++;
+    progress.unlocked++;
+    guard++;
+  }
+  saveProgress();
+}
+function renderQuest(){
+  checkQuest();
+  const q=currentQuest();
+  const val=Math.min(questValue(q),q.target);
+  const pct=Math.min(100,val/q.target*100);
+  const reward=skins[Math.min(progress.unlocked,skins.length-1)];
+  document.getElementById("questMain").innerHTML=`
+    <div style="color:var(--accent2);font-size:11px;font-weight:900;letter-spacing:1px">QUÊTE #${progress.quest}</div>
+    <div class="questTitle">${q.title}</div>
+    <div class="questDesc">${q.desc}</div>
+    <div class="progress"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="reward">${val}/${q.target} · Récompense : <b>${reward?reward.icon+" "+reward.name:"collection complète"}</b></div>
+  `;
+  const preview=document.getElementById("questPreview");
+  if(preview){
+    preview.innerHTML=`
+      <div class="questTitle">${q.title}</div>
+      <div class="questDesc">${q.desc}</div>
+      <div class="progress"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="reward">${val}/${q.target} · Récompense : <b>${reward?reward.icon+" "+reward.name:"collection complète"}</b></div>
+    `;
+  }
+  const wrap=document.getElementById("nextQuests");
+  wrap.innerHTML="";
+  for(let i=1;i<=4;i++){
+    const n=currentQuest(progress.quest+i);
+    const d=document.createElement("div");
+    d.className="nextQuest";
+    d.innerHTML=`<b>À venir #${progress.quest+i}</b><br>${n.desc}`;
+    wrap.appendChild(d);
+  }
+}
+
+function renderLevels(){
+  levelGrid.innerHTML="";
+  levels.forEach(l=>{
+    const b=document.createElement("button");
+    b.className="levelBtn"+(l.n===selectedLevel?" active":"");
+    b.innerHTML=`${l.n}<span class="dot"></span>`;
+    b.onclick=()=>{selectedLevel=l.n;renderLevels();updateLevelInfo()};
+    levelGrid.appendChild(b);
+  });
+}
+function updateLevelInfo(){
+  const l=levels[selectedLevel-1];
+  document.getElementById("infoDiff").textContent=l.label;
+  document.getElementById("infoSpeed").textContent=l.speed.toFixed(2);
+  document.getElementById("infoGravity").textContent=l.gravity.toFixed(2);
+  document.getElementById("infoBpm").textContent=l.bpm+" BPM";
+  const label=document.getElementById("selectedLevelLabel");
+  if(label)label.textContent="Niveau "+selectedLevel;
+}
+function renderSkins(){
+  skinGrid.innerHTML="";
+  skins.forEach((s,i)=>{
+    const unlocked=i<progress.unlocked;
+    const b=document.createElement("button");
+    b.className="skinCard"+(i===selectedSkin?" active":"")+(unlocked?"":" locked");
+    b.innerHTML=`<div class="skinIcon">${s.icon}${unlocked?"":" 🔒"}</div><div class="skinName">${s.name}</div>`;
+    b.onclick=()=>{
+      if(!unlocked){alert("Ce skin est verrouillé. Termine des quêtes pour le débloquer.");return}
+      selectedSkin=i;renderSkins();
+    };
+    skinGrid.appendChild(b);
+  });
+}
+
+document.querySelectorAll(".navBtn").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll(".navBtn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("page-"+btn.dataset.page).classList.add("active");
+  };
+});
+
+function openPage(name){
+  document.querySelectorAll(".navBtn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.page===name);
+  });
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  const page=document.getElementById("page-"+name);
+  if(page)page.classList.add("active");
+}
+
+document.getElementById("openLevelsBtn").onclick=()=>openPage("levels");
+document.getElementById("openQuestsBtn").onclick=()=>openPage("quests");
+document.getElementById("playSelectedBtn").onclick=startGame;
+
+
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  musicGain=audioCtx.createGain();
+  sfxGain=audioCtx.createGain();
+  musicGain.connect(audioCtx.destination);
+  sfxGain.connect(audioCtx.destination);
+  setVolumes();
+}
+async function wakeAudio(){
+  initAudio();
+  if(audioCtx.state!=="running"){
+    try{await audioCtx.resume()}catch(e){}
+  }
+}
+function setVolumes(){
+  if(musicGain)musicGain.gain.value=musicVolume/100*.55;
+  if(sfxGain)sfxGain.gain.value=sfxVolume/100*.85;
+}
+function tone(freq,dur=.12,type="sine",vol=.2,dest=sfxGain){
+  if(!audioCtx||!dest)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.value=vol;
+  o.connect(g);g.connect(dest);
+  const t=audioCtx.currentTime;
+  o.start(t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.stop(t+dur+.02);
+}
+function scoreSound(){tone(700,.12,"sine",.4);setTimeout(()=>tone(1040,.15,"sine",.28),55)}
+function rimSound(){tone(260,.08,"triangle",.25)}
+function loseSound(){tone(160,.35,"sawtooth",.18)}
+function flapSound(){tone(180,.04,"sine",.06)}
+function fireSound(){tone(440,.12,"square",.18);setTimeout(()=>tone(660,.15,"square",.15),70)}
+
+function musicTick(ts){
+  if(!running||!audioCtx||audioCtx.state!=="running")return;
+  const l=levels[selectedLevel-1];
+  const bpm=fireMode?l.bpm*1.27:l.bpm;
+  const interval=60000/bpm/2;
+  if(ts>=nextBeat){
+    const melody=melodies[(selectedLevel-1)%melodies.length];
+    const f=melody[musicStep%melody.length]*(fireMode?1.18:1);
+    tone(f,.16,fireMode?"square":"triangle",.14,musicGain);
+    musicStep++;
+    nextBeat=ts+interval;
+  }
+}
+
+const ball={x:innerWidth*.25,y:innerHeight/2,radius:24,velocity:0,rotation:0,rimCooldown:0};
+
+function config(){
+  const l=levels[selectedLevel-1];
+  if(!fireMode)return l;
+  return {
+    ...l,
+    speed:Math.min(7.05,l.speed*1.16),
+    gravity:Math.min(.64,l.gravity*1.06),
+    jump:Math.max(-9.15,l.jump*1.01),
+    distance:Math.max(330,l.distance-20)
+  };
+}
+
+/*
+Safe hoop generator:
+- keeps each new basket close enough vertically to the previous one,
+- clamps it away from screen edges,
+- prevents absurd jumps between hoops.
+*/
+let lastHoopY=null;
+function createHoop(){
+  const margin=135;
+  const minY=margin;
+  const maxY=canvas.height-margin;
+
+  let y;
+  if(lastHoopY===null){
+    y=canvas.height*.5;
+  }else{
+    const n=selectedLevel;
+    const maxShift=Math.max(105,190-Math.min(75,n*.35));
+    y=lastHoopY+(Math.random()*2-1)*maxShift;
+    y=Math.max(minY,Math.min(maxY,y));
+  }
+  lastHoopY=y;
+
+  hoops.push({
+    x:canvas.width+110,
+    y,
+    width:136,
+    scored:false,
+    wasAbove:false,
+    netSwing:0,
+    netVel:0
+  });
+
+  const c=config();
+  if(selectedLevel>=10&&Math.random()<c.obstacleChance){
+    const ox=canvas.width+320;
+    let oy=120+Math.random()*(canvas.height-240);
+
+    // Keep obstacle away from the direct hoop approach lane.
+    if(Math.abs(oy-y)<105){
+      oy = oy<y ? Math.max(90,y-145) : Math.min(canvas.height-90,y+145);
+    }
+    obstacles.push({x:ox,y:oy,size:34+Math.min(18,selectedLevel*.08),rot:0});
+  }
+}
+
+function particleBurst(x,y,count,fire=false){
+  for(let i=0;i<count;i++){
+    particles.push({x,y,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:1,size:2+Math.random()*4,fire});
+  }
+}
+
+async function startGame(){
+  await wakeAudio();
+  progress.games=(progress.games||0)+1;
+  progress.maxLevel=Math.max(progress.maxLevel||1,selectedLevel);
+  saveProgress();checkQuest();
+
+  score=0;fireMode=false;hoops=[];obstacles=[];particles=[];lastHoopY=null;
+  ball.y=canvas.height/2;ball.velocity=0;ball.rotation=0;ball.rimCooldown=0;
+  scoreHud.textContent="0";
+  fireHud.classList.add("hidden");
+  levelHud.textContent=`NIVEAU ${selectedLevel}`;
+  bestHud.textContent=`RECORD ${bestScore}`;
+
+  app.classList.add("hidden");
+  gameOver.classList.add("hidden");
+  hud.classList.remove("hidden");
+
+  createHoop();
+  running=true;
+  musicStep=0;
+  nextBeat=0;
+
+  tone(440,.12,"sine",.3);
+  setTimeout(()=>tone(660,.14,"sine",.22),70);
+}
+
+function flap(){
+  if(!running)return;
+  ball.velocity=config().jump;
+  flapSound();
+  particleBurst(ball.x-18,ball.y,4,fireMode);
+}
+
+addEventListener("mousedown",e=>{
+  if(!app.classList.contains("hidden"))return;
+  if(!gameOver.classList.contains("hidden"))return;
+  flap();
+});
+addEventListener("keydown",e=>{
+  if(awaitingKey){
+    jumpKey=e.code;
+    localStorage.setItem("dunklineKey",jumpKey);
+    awaitingKey=false;
+    updateKeyUI();
+    e.preventDefault();
+    return;
+  }
+  if(e.code===jumpKey){
+    e.preventDefault();
+    flap();
+  }
+});
+
+function update(){
+  if(!running)return;
+  const c=config();
+
+  if(ball.rimCooldown>0)ball.rimCooldown--;
+  ball.velocity+=c.gravity;
+  ball.y+=ball.velocity;
+  ball.rotation+=.05*(fireMode?1.45:1);
+
+  if(ball.y-ball.radius<0||ball.y+ball.radius>canvas.height){
+    lose();return;
+  }
+
+  hoops.forEach(h=>{
+    h.x-=c.speed;
+    h.netSwing+=h.netVel;
+    h.netVel*=.86;
+    h.netSwing*=.90;
+
+    const left=h.x,right=h.x+h.width;
+    const inside=ball.x>left+ball.radius*.38&&ball.x<right-ball.radius*.38;
+    const rimY=h.y+6;
+
+    // Hard rim edges with bounce.
+    if(ball.rimCooldown<=0){
+      for(const px of [left,right]){
+        const dx=ball.x-px,dy=ball.y-rimY;
+        const d=Math.hypot(dx,dy);
+        const min=ball.radius+9;
+        if(d<min&&d>0){
+          const nx=dx/d,ny=dy/d;
+          ball.x+=nx*(min-d);
+          ball.y+=ny*(min-d);
+          ball.velocity+=ny*3.1;
+          ball.rimCooldown=5;
+          screenShake=3;
+          rimSound();
+          break;
+        }
+      }
+    }
+
+    if(inside&&ball.y<h.y-8)h.wasAbove=true;
+
+    if(!h.scored&&h.wasAbove&&inside&&ball.y>h.y+20&&ball.velocity>0){
+      h.scored=true;
+      score++;
+      scoreHud.textContent=score;
+
+      progress.hoops=(progress.hoops||0)+1;
+      progress.totalScore=(progress.totalScore||0)+1;
+      saveProgress();
+
+      h.netVel=5;
+      screenShake=6;
+      flashAlpha=.13;
+      particleBurst(h.x+h.width/2,h.y+25,22,fireMode);
+      scoreSound();
+
+      if(score===7&&!fireMode){
+        fireMode=true;
+        progress.fires=(progress.fires||0)+1;
+        saveProgress();
+        fireHud.classList.remove("hidden");
+        fireSound();
+        screenShake=10;
+        flashAlpha=.26;
+      }
+
+      if(score>bestScore){
+        bestScore=score;
+        localStorage.setItem("dunklineBest",bestScore);
+      }
+
+      checkQuest();
+    }
+
+    if(right<ball.x-ball.radius&&!h.scored){
+      lose();
+    }
+  });
+
+  hoops=hoops.filter(h=>h.x>-250);
+  const last=hoops[hoops.length-1];
+  if(last&&canvas.width-last.x>c.distance){
+    createHoop();
+  }
+
+  obstacles.forEach(o=>{
+    o.x-=c.speed;
+    o.rot+=.045;
+    if(Math.hypot(ball.x-o.x,ball.y-o.y)<ball.radius+o.size*.5){
+      lose();
+    }
+  });
+  obstacles=obstacles.filter(o=>o.x>-100);
+
+  particles.forEach(p=>{
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=.07;
+    p.life-=.026;
+  });
+  particles=particles.filter(p=>p.life>0);
+
+  if(screenShake>0)screenShake*=.8;
+  if(flashAlpha>0)flashAlpha*=.84;
+}
+
+function drawBackground(){
+  const t=themes[Math.floor((selectedLevel-1)/15)%themes.length];
+  const g=ctx.createLinearGradient(0,0,0,canvas.height);
+  g.addColorStop(0,t[0]);
+  g.addColorStop(1,t[1]);
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.globalAlpha=.13;
+  ctx.fillStyle="#fff";
+  for(let i=0;i<14;i++){
+    const x=(i*197+performance.now()*.012)%(canvas.width+100)-50;
+    const y=(i*113)%canvas.height;
+    ctx.beginPath();
+    ctx.arc(x,y,2+(i%3),0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawHoop(h){
+  const y=h.y;
+  const left=h.x;
+  const right=h.x+h.width;
+  const center=(left+right)/2;
+
+  // Filet fin et souple, inspiré du panier montré dans la vidéo.
+  ctx.save();
+  ctx.strokeStyle="rgba(55,55,55,.72)";
+  ctx.lineWidth=1.7;
+  ctx.lineCap="round";
+
+  const netTop=y+9;
+  const netBottom=y+78;
+  const bottomHalf=25;
+
+  // Fils verticaux inclinés vers le centre.
+  for(let i=0;i<=8;i++){
+    const t=i/8;
+    const tx=left+8+t*(h.width-16);
+    const bx=center+(t-.5)*(bottomHalf*2)+h.netSwing;
+    ctx.beginPath();
+    ctx.moveTo(tx,netTop);
+    ctx.quadraticCurveTo(
+      center+(t-.5)*58+h.netSwing*.55,
+      y+44,
+      bx,
+      netBottom
+    );
+    ctx.stroke();
+  }
+
+  // Mailles horizontales légèrement courbées.
+  for(let row=1;row<=4;row++){
+    const t=row/5;
+    const halfTop=(h.width-16)/2;
+    const half=halfTop*(1-t)+bottomHalf*t;
+    const cy=netTop+t*(netBottom-netTop);
+    ctx.beginPath();
+    ctx.moveTo(center-half+h.netSwing*t,cy);
+    ctx.quadraticCurveTo(center+h.netSwing*t,cy+5,center+half+h.netSwing*t,cy);
+    ctx.stroke();
+  }
+
+  // Anneau rouge/orange fin et arrondi.
+  ctx.shadowColor="rgba(0,0,0,.20)";
+  ctx.shadowBlur=4;
+  ctx.shadowOffsetY=2;
+  const rimGrad=ctx.createLinearGradient(0,y-3,0,y+12);
+  rimGrad.addColorStop(0,"#ff7549");
+  rimGrad.addColorStop(.5,"#e94d27");
+  rimGrad.addColorStop(1,"#c93619");
+  ctx.strokeStyle=rimGrad;
+  ctx.lineWidth=8;
+  ctx.beginPath();
+  ctx.moveTo(left+4,y+6);
+  ctx.lineTo(right-4,y+6);
+  ctx.stroke();
+
+  // Petits embouts ronds du panier.
+  ctx.shadowBlur=0;
+  ctx.fillStyle="#d94120";
+  ctx.beginPath();
+  ctx.arc(left,y+6,7.5,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(right,y+6,7.5,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawObstacle(o){
+  ctx.save();
+  ctx.translate(o.x,o.y);
+  ctx.rotate(o.rot);
+  ctx.fillStyle="#e33c52";
+  ctx.beginPath();
+  for(let i=0;i<16;i++){
+    const a=i*Math.PI/8;
+    const r=i%2===0?o.size:o.size*.52;
+    const x=Math.cos(a)*r,y=Math.sin(a)*r;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBall(){
+  ctx.save();
+  ctx.translate(ball.x,ball.y);
+  ctx.rotate(ball.rotation);
+
+  if(fireMode){
+    const g=ctx.createRadialGradient(0,0,5,0,0,52);
+    g.addColorStop(0,"rgba(255,235,120,.65)");
+    g.addColorStop(.42,"rgba(255,88,0,.45)");
+    g.addColorStop(1,"rgba(255,0,0,0)");
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.arc(0,0,52,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.font="48px Arial";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(skins[selectedSkin].icon,0,0);
+  ctx.restore();
+}
+
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.fire?(Math.random()>.5?"#ff4a00":"#ffd35a"):"#ffe36b";
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function draw(){
+  ctx.save();
+  if(screenShake>0){
+    ctx.translate((Math.random()-.5)*screenShake,(Math.random()-.5)*screenShake);
+  }
+  drawBackground();
+  hoops.forEach(drawHoop);
+  obstacles.forEach(drawObstacle);
+  drawParticles();
+  drawBall();
+  ctx.restore();
+
+  if(flashAlpha>0){
+    ctx.fillStyle=`rgba(255,255,255,${flashAlpha})`;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+}
+
+function lose(){
+  if(!running)return;
+  running=false;
+  loseSound();
+
+  document.getElementById("finalScore").textContent=score;
+
+  if(score>bestScore){
+    bestScore=score;
+    localStorage.setItem("dunklineBest",bestScore);
+    document.getElementById("recordText").textContent="Nouveau record";
+  }else{
+    document.getElementById("recordText").textContent="Record : "+bestScore;
+  }
+
+  bestHud.textContent="RECORD "+bestScore;
+  menuBest.textContent=bestScore;
+
+  setTimeout(()=>{
+    hud.classList.add("hidden");
+    gameOver.classList.remove("hidden");
+  },230);
+}
+
+function loop(ts){
+  musicTick(ts);
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+document.getElementById("playBtn").onclick=startGame;
+document.getElementById("retryBtn").onclick=startGame;
+document.getElementById("backMenu").onclick=()=>{
+  gameOver.classList.add("hidden");
+  app.classList.remove("hidden");
+  renderQuest();
+  renderSkins();
+  menuBest.textContent=bestScore;
+};
+
+const musicSlider=document.getElementById("musicVolume");
+const sfxSlider=document.getElementById("sfxVolume");
+musicSlider.value=musicVolume;
+sfxSlider.value=sfxVolume;
+
+function updateVolumeUI(){
+  document.getElementById("musicValue").textContent=musicVolume+"%";
+  document.getElementById("sfxValue").textContent=sfxVolume+"%";
+}
+updateVolumeUI();
+
+musicSlider.oninput=()=>{
+  musicVolume=Number(musicSlider.value);
+  localStorage.setItem("dunklineMusic",musicVolume);
+  setVolumes();
+  updateVolumeUI();
+};
+sfxSlider.oninput=()=>{
+  sfxVolume=Number(sfxSlider.value);
+  localStorage.setItem("dunklineSfx",sfxVolume);
+  setVolumes();
+  updateVolumeUI();
+};
+
+function updateKeyUI(){
+  const names={Space:"ESPACE",ArrowUp:"FLÈCHE HAUT",ArrowDown:"FLÈCHE BAS",ArrowLeft:"FLÈCHE GAUCHE",ArrowRight:"FLÈCHE DROITE"};
+  document.getElementById("keyDisplay").textContent=names[jumpKey]||jumpKey.replace("Key","").replace("Digit","");
+  document.getElementById("keyHint").textContent=awaitingKey
+    ?"Appuie maintenant sur la touche que tu veux."
+    :"Clique sur CHANGER puis appuie sur la touche de ton choix.";
+}
+updateKeyUI();
+document.getElementById("changeKey").onclick=()=>{
+  awaitingKey=true;
+  updateKeyUI();
+};
+
+addEventListener("resize",()=>{
+  canvas.width=innerWidth;
+  canvas.height=innerHeight;
+  ball.x=innerWidth*.25;
+});
+
+menuBest.textContent=bestScore;
+renderLevels();
+updateLevelInfo();
+renderSkins();
+renderQuest();
+</script>
+<script>
+/* =========================
+   DUNKLINE - PANEL ADMIN
+   ========================= */
+
+const ADMIN_PIN = "071114"; // CHANGE CE CODE
+
+let adminConnected = false;
+let adminInvincible = false;
+
+/* BOUTON ADMIN */
+const adminButton = document.createElement("button");
+
+adminButton.innerHTML = "ADMIN";
+
+Object.assign(adminButton.style,{
+    position:"fixed",
+    bottom:"20px",
+    left:"20px",
+    zIndex:"99999",
+    padding:"12px 18px",
+    border:"0",
+    borderRadius:"10px",
+    background:"#ff5b28",
+    color:"white",
+    fontWeight:"900",
+    cursor:"pointer"
+});
+
+document.body.appendChild(adminButton);
+
+
+/* PANNEAU */
+const adminPanel = document.createElement("div");
+
+adminPanel.innerHTML = `
+<div style="
+width:420px;
+max-width:92vw;
+background:#11151c;
+border:1px solid #303744;
+border-radius:18px;
+padding:22px;
+box-shadow:0 25px 80px rgba(0,0,0,.7);
+">
+
+<h2 style="margin-top:0">
+DUNKLINE ADMIN
+</h2>
+
+<div style="opacity:.6;font-size:12px;margin-bottom:20px">
+Panneau développeur
+</div>
+
+
+<div style="margin-bottom:15px">
+
+<label>NIVEAU</label>
+
+<div style="display:flex;gap:8px;margin-top:7px">
+
+<input
+id="adminLevel"
+type="number"
+min="1"
+max="170"
+value="1"
+style="
+flex:1;
+padding:10px;
+border-radius:8px;
+border:1px solid #333;
+background:#090c12;
+color:white;
+">
+
+<button id="adminTeleport">
+TÉLÉPORTER
+</button>
+
+</div>
+</div>
+
+
+<div style="margin-bottom:15px">
+
+<label>SCORE</label>
+
+<div style="display:flex;gap:8px;margin-top:7px">
+
+<input
+id="adminScore"
+type="number"
+value="0"
+style="
+flex:1;
+padding:10px;
+border-radius:8px;
+border:1px solid #333;
+background:#090c12;
+color:white;
+">
+
+<button id="adminSetScore">
+VALIDER
+</button>
+
+</div>
+</div>
+
+
+<button id="adminSkins">
+🔓 DÉBLOQUER TOUS LES SKINS
+</button>
+
+<button id="adminFire">
+🔥 FIRE MODE
+</button>
+
+<button id="adminInvincible">
+🛡️ INVINCIBILITÉ : OFF
+</button>
+
+<button id="adminReset">
+♻️ RESET ADMIN
+</button>
+
+<button id="adminClose">
+FERMER
+</button>
+
+</div>
+`;
+
+Object.assign(adminPanel.style,{
+    position:"fixed",
+    inset:"0",
+    zIndex:"999999",
+    background:"rgba(0,0,0,.72)",
+    display:"none",
+    alignItems:"center",
+    justifyContent:"center"
+});
+
+document.body.appendChild(adminPanel);
+
+
+/* STYLE DES BOUTONS */
+adminPanel.querySelectorAll("button").forEach(btn=>{
+
+    Object.assign(btn.style,{
+        padding:"11px 13px",
+        border:"0",
+        borderRadius:"8px",
+        background:"#202632",
+        color:"white",
+        fontWeight:"800",
+        cursor:"pointer",
+        margin:"4px"
+    });
+
+});
+
+
+/* LOGIN */
+adminButton.onclick = ()=>{
+
+    if(!adminConnected){
+
+        const pin = prompt("CODE ADMIN");
+
+        if(pin !== ADMIN_PIN){
+
+            alert("CODE INCORRECT");
+
+            return;
+        }
+
+        adminConnected = true;
+
+        adminButton.innerHTML = "ADMIN ✓";
+    }
+
+    adminPanel.style.display = "flex";
+};
+
+
+/* TELEPORTATION NIVEAU */
+document.getElementById("adminTeleport").onclick = ()=>{
+
+    let level =
+        Number(
+            document.getElementById("adminLevel").value
+        );
+
+    level =
+        Math.max(
+            1,
+            Math.min(
+                170,
+                level
+            )
+        );
+
+    selectedLevel = level;
+
+    if(typeof renderLevels === "function")
+        renderLevels();
+
+    if(typeof updateLevelInfo === "function")
+        updateLevelInfo();
+
+    alert(
+        "Niveau " +
+        level +
+        " sélectionné"
+    );
+};
+
+
+/* SCORE */
+document.getElementById("adminSetScore").onclick = ()=>{
+
+    const newScore =
+        Number(
+            document.getElementById("adminScore").value
+        );
+
+    score =
+        Math.max(
+            0,
+            newScore
+        );
+
+    if(typeof scoreHud !== "undefined"){
+
+        scoreHud.textContent =
+            score;
+    }
+};
+
+
+/* TOUS LES SKINS */
+document.getElementById("adminSkins").onclick = ()=>{
+
+    if(
+        typeof progress !== "undefined" &&
+        typeof skins !== "undefined"
+    ){
+
+        progress.unlocked =
+            skins.length;
+
+        if(typeof saveProgress === "function")
+            saveProgress();
+
+        if(typeof renderSkins === "function")
+            renderSkins();
+
+        alert(
+            skins.length +
+            " skins débloqués"
+        );
+    }
+
+};
+
+
+/* FIRE MODE */
+document.getElementById("adminFire").onclick = ()=>{
+
+    fireMode =
+        !fireMode;
+
+    if(
+        typeof fireHud !== "undefined"
+    ){
+
+        fireHud.classList.toggle(
+            "hidden",
+            !fireMode
+        );
+    }
+
+};
+
+
+/* INVINCIBILITÉ */
+document.getElementById("adminInvincible").onclick = function(){
+
+    adminInvincible =
+        !adminInvincible;
+
+    this.innerHTML =
+        adminInvincible
+        ? "🛡️ INVINCIBILITÉ : ON"
+        : "🛡️ INVINCIBILITÉ : OFF";
+};
+
+
+/* PROTECTION CONTRE LA MORT */
+
+if(typeof lose === "function"){
+
+    const originalLose =
+        lose;
+
+    lose = function(){
+
+        if(adminInvincible){
+
+            ball.y =
+                canvas.height / 2;
+
+            ball.velocity =
+                0;
+
+            return;
+        }
+
+        originalLose();
+    };
+
+}
+
+
+/* RESET */
+document.getElementById("adminReset").onclick = ()=>{
+
+    adminInvincible =
+        false;
+
+    fireMode =
+        false;
+
+    score =
+        0;
+
+    selectedLevel =
+        1;
+
+    selectedSkin =
+        0;
+
+    if(typeof scoreHud !== "undefined")
+        scoreHud.textContent = "0";
+
+    alert(
+        "Admin reset"
+    );
+};
+
+
+/* FERMER */
+document.getElementById("adminClose").onclick = ()=>{
+
+    adminPanel.style.display =
+        "none";
+};
+
+
+/* RACCOURCI ADMIN : CTRL + SHIFT + A */
+
+document.addEventListener(
+    "keydown",
+    e=>{
+
+        if(
+            e.ctrlKey &&
+            e.shiftKey &&
+            e.code === "KeyA"
+        ){
+
+            adminButton.click();
+        }
+
+    }
+);
+
+</script>
+</body>
+</html>
