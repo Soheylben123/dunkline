@@ -332,6 +332,8 @@ let awaitingKey=false;
 let musicVolume=Number(localStorage.getItem("dunklineMusic")||70);
 let sfxVolume=Number(localStorage.getItem("dunklineSfx")||85);
 let audioCtx=null,musicGain=null,sfxGain=null,nextBeat=0,musicStep=0;
+let level67Pulse=0;
+let level67VoiceStep=0;
 
 const iconPool=["🏀","⚽","⚾","🎾","🏐","🎱","🪐","🌍","💣","🍩","🍪","🍎","💎","💀","☀️","👽","⭐","❤️","🔥","⚡","❄️","🌈","🌙","☄️","🍉","🍓","🍒","🥝","🍋","🥥","🍕","🍔","🌮","🍟","🎃","👻","🤖","👑","🎲","🧊","🔮","🛸","🚀","🚗","🏎️","🎯","🎮","🎧","🐉","🦄","🐸","🐼","🦊","🐺","🦁","🐯","🐙","🦈","🦋","🦂","🐍","🦖","🦅","🦇","🌵","🌊","🌋","🎁","🧸","🪩","🪐","🛰️","🧨"];
 const prefixes=["Classic","Neon","Shadow","Fire","Ice","Galaxy","Gold","Toxic","Cyber","Royal","Storm","Lava","Ghost","Crystal","Ultra","Dark","Light","Plasma","Cosmic","Turbo"];
@@ -442,7 +444,16 @@ function renderLevels(){
   levels.forEach(l=>{
     const b=document.createElement("button");
     b.className="levelBtn"+(l.n===selectedLevel?" active":"");
-    b.innerHTML=`${l.n}<span class="dot"></span>`;
+    if(l.n===67){
+      b.innerHTML=`🔥 67 🔥<span class="dot"></span>`;
+      b.title="NIVEAU SECRET 67 — Clique pour découvrir le 67 MODE";
+      b.style.background="linear-gradient(135deg,#ff6b2c,#ffb066)";
+      b.style.color="#fff";
+      b.style.boxShadow="0 0 0 2px rgba(255,176,102,.2),0 10px 28px rgba(255,107,44,.28)";
+      b.style.fontSize="13px";
+    }else{
+      b.innerHTML=`${l.n}<span class="dot"></span>`;
+    }
     b.onclick=()=>{selectedLevel=l.n;renderLevels();updateLevelInfo()};
     levelGrid.appendChild(b);
   });
@@ -454,7 +465,7 @@ function updateLevelInfo(){
   document.getElementById("infoGravity").textContent=l.gravity.toFixed(2);
   document.getElementById("infoBpm").textContent=l.bpm+" BPM";
   const label=document.getElementById("selectedLevelLabel");
-  if(label)label.textContent="Niveau "+selectedLevel;
+  if(label)label.textContent=selectedLevel===67 ? "🔥 NIVEAU SECRET 67 🔥" : "Niveau "+selectedLevel;
 }
 function renderSkins(){
   skinGrid.innerHTML="";
@@ -527,17 +538,47 @@ function loseSound(){tone(160,.35,"sawtooth",.18)}
 function flapSound(){tone(180,.04,"sine",.06)}
 function fireSound(){tone(440,.12,"square",.18);setTimeout(()=>tone(660,.15,"square",.15),70)}
 
+function level67Hit(){
+  if(!audioCtx)return;
+  tone(67,.10,"square",.22,sfxGain);
+  setTimeout(()=>tone(670,.11,"triangle",.24,sfxGain),55);
+  setTimeout(()=>tone(134,.12,"sine",.18,sfxGain),115);
+  level67Pulse=1;
+}
+
+function speak67(){
+  if(!("speechSynthesis" in window))return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance("soixante sept");
+    u.lang="fr-FR";
+    u.rate=1.35;
+    u.pitch=.9;
+    u.volume=Math.min(1,sfxVolume/100);
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
 function musicTick(ts){
   if(!running||!audioCtx||audioCtx.state!=="running")return;
   const l=levels[selectedLevel-1];
   const bpm=fireMode?l.bpm*1.27:l.bpm;
   const interval=60000/bpm/2;
   if(ts>=nextBeat){
-    const melody=melodies[(selectedLevel-1)%melodies.length];
-    const f=melody[musicStep%melody.length]*(fireMode?1.18:1);
-    tone(f,.16,fireMode?"square":"triangle",.14,musicGain);
-    musicStep++;
-    nextBeat=ts+interval;
+    if(selectedLevel===67){
+      const seq=[67,134,201,268,335,402,536,670];
+      const f=seq[musicStep%seq.length]*(fireMode?1.12:1);
+      tone(f,.13,musicStep%2?"square":"triangle",.17,musicGain);
+      if(musicStep%4===0)level67Hit();
+      musicStep++;
+      nextBeat=ts+Math.max(105,interval*.72);
+    }else{
+      const melody=melodies[(selectedLevel-1)%melodies.length];
+      const f=melody[musicStep%melody.length]*(fireMode?1.18:1);
+      tone(f,.16,fireMode?"square":"triangle",.14,musicGain);
+      musicStep++;
+      nextBeat=ts+interval;
+    }
   }
 }
 
@@ -629,8 +670,14 @@ async function startGame(){
   musicStep=0;
   nextBeat=0;
 
-  tone(440,.12,"sine",.3);
-  setTimeout(()=>tone(660,.14,"sine",.22),70);
+  if(selectedLevel===67){
+    level67Hit();
+    setTimeout(level67Hit,180);
+    setTimeout(speak67,360);
+  }else{
+    tone(440,.12,"sine",.3);
+    setTimeout(()=>tone(660,.14,"sine",.22),70);
+  }
 }
 
 function flap(){
@@ -719,6 +766,13 @@ function update(){
       particleBurst(h.x+h.width/2,h.y+25,22,fireMode);
       scoreSound();
 
+      if(selectedLevel===67 && (score===6 || score===7 || score%7===0)){
+        level67Hit();
+        if(score===7 || score%14===0)speak67();
+        screenShake=Math.max(screenShake,9);
+        flashAlpha=Math.max(flashAlpha,.22);
+      }
+
       if(score===7&&!fireMode){
         fireMode=true;
         progress.fires=(progress.fires||0)+1;
@@ -787,6 +841,40 @@ function drawBackground(){
     ctx.fill();
   }
   ctx.globalAlpha=1;
+
+  if(selectedLevel===67){
+    level67Pulse*=.90;
+    ctx.save();
+    ctx.globalAlpha=.11 + level67Pulse*.13;
+    ctx.fillStyle="#fff";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.font="900 54px Arial";
+    const spacingX=135;
+    const spacingY=100;
+    const drift=(performance.now()*.035)%spacingY;
+    for(let y=-spacingY+drift;y<canvas.height+spacingY;y+=spacingY){
+      for(let x=45;x<canvas.width+spacingX;x+=spacingX){
+        ctx.save();
+        ctx.translate(x + ((Math.floor(y/spacingY)%2)*55), y);
+        ctx.rotate(((x+y)%3-1)*.07);
+        ctx.fillText("67",0,0);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+
+    // Bandeau discret en haut
+    ctx.save();
+    ctx.globalAlpha=.9;
+    ctx.fillStyle="rgba(10,12,16,.34)";
+    ctx.fillRect(0,canvas.height-54,canvas.width,54);
+    ctx.fillStyle="#fff";
+    ctx.font="900 22px Arial";
+    ctx.textAlign="center";
+    ctx.fillText("🔥 67 MODE • SOIXANTE-SEPT 🔥",canvas.width/2,canvas.height-27);
+    ctx.restore();
+  }
 }
 
 function drawHoop(h){
@@ -857,6 +945,14 @@ function drawHoop(h){
   ctx.beginPath();
   ctx.arc(right,y+6,7.5,0,Math.PI*2);
   ctx.fill();
+
+  if(selectedLevel===67){
+    ctx.shadowBlur=0;
+    ctx.fillStyle="rgba(255,255,255,.92)";
+    ctx.font="900 18px Arial";
+    ctx.textAlign="center";
+    ctx.fillText("67",center,y-15);
+  }
 
   ctx.restore();
 }
@@ -1039,7 +1135,7 @@ adminButton.innerHTML = "ADMIN";
 Object.assign(adminButton.style,{
     position:"fixed",
     bottom:"20px",
-    left:"20px",
+    right:"20px",
     zIndex:"99999",
     padding:"12px 18px",
     border:"0",
